@@ -1,2 +1,37 @@
-# civil-service-exam-notes
-A curated collection of study notes for civil service exams, covering core modules like administrative aptitude test, essay writing, and professional knowledge. Includes key point summaries, real exam analysis, and practical preparation tips to help candidates review efficiently. Open for contributions and discussions.
+civil-service-exam-notes
+
+公务员考试备考笔记仓库 | Civil Service Exam Study Notes
+
+本仓库用于整理、存储公务员考试（含国考、省考）相关备考笔记、知识点总结、答题技巧及备考资料，旨在为备考者提供系统、清晰的学习参考，助力高效备考。
+
+📚 仓库内容结构
+
+- 行测模块：言语理解与表达、数量关系、判断推理、资料分析、常识判断的核心知识点、解题技巧及易错点总结。
+
+- 申论模块：归纳概括、综合分析、提出对策、应用文写作、文章论述的答题框架、素材积累及范文参考。
+
+- 真题解析：精选历年国考、省考真题，搭配详细解析，帮助掌握命题规律。
+
+- 备考指南：备考计划、时间管理技巧、心态调整建议，适配不同备考阶段需求。
+
+💡 使用说明
+
+1. 本仓库内容持续更新，可直接克隆到本地查看，或在线浏览对应笔记文件。
+
+2. 笔记以简洁易懂、重点突出为原则，可结合自身备考进度，针对性查阅对应模块内容。
+
+3. 建议搭配真题练习使用，将笔记知识点与实际答题结合，提升备考效率。
+
+🤝 贡献指南
+
+欢迎各位备考伙伴补充、完善笔记内容：
+
+- 若发现笔记有误或遗漏，可提交Issue说明问题。
+
+- 如需补充知识点、答题技巧，可提交Pull Request，注明补充内容所属模块。
+
+⚠️ 免责声明
+
+本仓库所有笔记及资料均为个人备考整理，仅供学习参考使用，不构成任何备考承诺。备考请以官方考试大纲、教材及权威资料为准。
+
+祝各位备考顺利，成功上岸！🚀
