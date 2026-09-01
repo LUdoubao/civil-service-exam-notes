@@ -166,6 +166,10 @@ cd civil-service-exam-notes
 - `[申论] 新增 归纳概括-常见失分点`
 - `[真题] 完善 2025-国考-行测-省部级-解析`
 
+## 选择题生成约定
+
+项目级 Agent 规则见根目录 [`AGENTS.md`](AGENTS.md)。选择题必须将题目与答案拆分到 `题库/题目/<大类>/` 和 `题库/答案/<大类>/`，题目使用 HTML 单选/多选按钮并链接到答案文件的对应锚点；题目和答案都要标注可追溯的具体来源，每题至少包含 3 个 `#标签`，且必须包含固定大类标签。可直接复制 [`90-模板/选择题模板.md`](90-模板/选择题模板.md) 与 [`90-模板/答案模板.md`](90-模板/答案模板.md) 开始新增题目。
+
 ## 许可证
 
 除另有说明外，本仓库内容采用 [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-nc-sa/4.0/) 许可证发布。
