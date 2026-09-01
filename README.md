@@ -172,6 +172,8 @@ cd civil-service-exam-notes
 
 题目来源默认按每 5 题 4 道真题、1 道原创题执行（累计比例 4:1）；真题需标注完整考试出处，真题改编题按原创（改编）计数。
 
+原创题也必须通过真题同水平质量检查：考点、难度、题干、干扰项、语言和解析均需可核验，任何一项不达标都应退回重写。
+
 ## 许可证
 
 除另有说明外，本仓库内容采用 [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-nc-sa/4.0/) 许可证发布。
