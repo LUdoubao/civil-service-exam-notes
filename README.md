@@ -174,6 +174,8 @@ cd civil-service-exam-notes
 
 真题默认从 Agent 规范列出的真题库网站检索或采集，并记录站点名称、页面标题和题号；来源冲突时以官方原卷或交叉核验结果为准。
 
+题库采集、图片本地化和静态校验工具见 [`scripts/README.md`](scripts/README.md)，默认预览，使用 `--apply` 才写入正式题目、答案和图片。
+
 ## 许可证
 
 除另有说明外，本仓库内容采用 [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-nc-sa/4.0/) 许可证发布。
