@@ -172,6 +172,8 @@ cd civil-service-exam-notes
 
 题库仅收录公开发布且可核验的真题，不生成原创题、改编题或变式题。每道题必须标注完整考试出处和权威来源链接或出版物页码；无法核验的题目不提交。
 
+真题默认从 Agent 规范列出的真题库网站检索或采集，并记录站点名称、页面标题和题号；来源冲突时以官方原卷或交叉核验结果为准。
+
 ## 许可证
 
 除另有说明外，本仓库内容采用 [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-nc-sa/4.0/) 许可证发布。
