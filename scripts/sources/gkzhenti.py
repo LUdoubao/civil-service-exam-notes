@@ -157,7 +157,13 @@ def parse_answer_page(payload: bytes) -> dict[int, str]:
     return _extract_answers(_lines(page))
 
 
-def parse_paper(payload: bytes, page_url: str, province: str, subject: str = "") -> PaperRecord:
+def parse_paper(
+    payload: bytes,
+    page_url: str,
+    province: str,
+    subject: str = "",
+    question_type: str = "",
+) -> PaperRecord:
     """从试卷页提取原题，不改写题干、选项或顺序。"""
 
     charset = re.search(rb"charset\s*=\s*[\"']?([A-Za-z0-9_-]+)", payload[:4096], re.I)
@@ -191,7 +197,8 @@ def parse_paper(payload: bytes, page_url: str, province: str, subject: str = "")
         if subject and subject not in section and section not in subject:
             current = None
             return
-        question_id = f"行测-{paper.year or '未知'}-{province}{paper.paper_type}-{subject or section}-{number:03d}"
+        classification = question_type or subject or section
+        question_id = f"行测-{paper.year or '未知'}-{province}{paper.paper_type}-{classification}-{number:03d}"
         parsed.append(
             QuestionRecord(
                 id=question_id,
@@ -199,7 +206,7 @@ def parse_paper(payload: bytes, page_url: str, province: str, subject: str = "")
                 year=paper.year,
                 province=province,
                 paper_type=paper.paper_type,
-                subject=subject or section,
+                subject=classification,
                 source_kind=paper.source_kind,
                 source_site=SOURCE_SITE,
                 source_url=page_url,
@@ -210,7 +217,7 @@ def parse_paper(payload: bytes, page_url: str, province: str, subject: str = "")
                 answer=answer_map.get(number, ""),
                 answer_status="已找到" if number in answer_map else "待核验",
                 answer_source_url=page_url if number in answer_map else "",
-                tags=["行测", subject or section, "真题", paper.source_kind],
+                tags=["行测", classification, "真题", paper.source_kind],
             )
         )
         current = None

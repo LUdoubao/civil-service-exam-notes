@@ -11,6 +11,7 @@ sys.path.insert(0, str(ROOT))
 
 from sources.gkzhenti import find_answer_links, parse_answer_page, parse_index, parse_paper
 from quiz_render import render_answer_file, render_question_file
+from quiz_pipeline import _token_report
 from quiz_validate import validate_path
 
 
@@ -23,9 +24,17 @@ class QuizPipelineTests(unittest.TestCase):
 
     def test_parse_subject_and_answers(self) -> None:
         payload = (ROOT / "fixtures" / "paper.html").read_bytes()
-        paper = parse_paper(payload, "https://gwy.gkzhenti.cn/paper/123", "浙江", "言语理解与表达")
+        paper = parse_paper(
+            payload,
+            "https://gwy.gkzhenti.cn/paper/123",
+            "浙江",
+            "言语理解与表达",
+            question_type="逻辑填空",
+        )
         self.assertEqual([question.question_number for question in paper.questions], [21, 22])
         self.assertEqual(paper.questions[0].options[0].text, "独善其身")
+        self.assertEqual(paper.questions[0].subject, "逻辑填空")
+        self.assertIn("行测-2024-浙江A类-逻辑填空-021", paper.questions[0].id)
         self.assertEqual(paper.questions[0].answer, "A")
         self.assertEqual(paper.questions[1].answer_status, "已找到")
         self.assertEqual(paper.questions[1].images[0].source_url, "https://gwy.gkzhenti.cn/assets/diagram.png")
@@ -54,6 +63,15 @@ class QuizPipelineTests(unittest.TestCase):
         self.assertNotIn("正确选项", question_text)
         self.assertIn("<a id=\"行测-2024-浙江A类-言语理解与表达-021\"></a>", answer_text)
         self.assertIn("对应题目: ../../题目/行测/题目.md", answer_text)
+
+    def test_token_report_is_explicitly_an_estimate(self) -> None:
+        payload = (ROOT / "fixtures" / "paper.html").read_bytes()
+        paper = parse_paper(payload, "https://gwy.gkzhenti.cn/paper/123", "浙江", "言语理解与表达")
+        report = _token_report(paper, "题目内容", "答案内容")
+        self.assertGreater(report["content_token_estimate"]["question_tokens"], 0)
+        self.assertGreater(report["content_token_estimate"]["answer_tokens"], 0)
+        self.assertIsNone(report["conversation_token_usage"]["total_tokens"])
+        self.assertEqual(report["conversation_token_usage"]["status"], "不可读取")
 
 
 if __name__ == "__main__":

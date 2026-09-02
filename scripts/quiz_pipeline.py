@@ -30,6 +30,56 @@ CACHE_ROOT = ROOT / ".cache" / "quiz" / "gkzhenti"
 RESOURCE_ROOT = ROOT / "题库" / "资源" / "图片"
 
 
+def _estimate_tokens(value: str) -> int:
+    """以 UTF-8 字节数粗估上下文 Token，不代表任何模型账单。"""
+
+    return max(1, (len(value.encode("utf-8")) + 3) // 4)
+
+
+def _token_report(paper: gkzhenti.PaperRecord, question_text: str, answer_text: str) -> dict[str, object]:
+    question_context = "\n".join(
+        f"{question.id}\n{question.question_text}\n" + "\n".join(f"{option.label}. {option.text}" for option in question.options)
+        for question in paper.questions
+    )
+    answer_context = "\n".join(
+        f"{question.id}\n{question.answer}\n{question.answer_status}\n{question.answer_source_url}" for question in paper.questions
+    )
+    question_estimate = _estimate_tokens(question_context)
+    answer_estimate = _estimate_tokens(answer_context)
+    return {
+        "content_token_estimate": {
+            "question_tokens": question_estimate,
+            "answer_tokens": answer_estimate,
+            "total_tokens": question_estimate + answer_estimate,
+            "rendered_question_tokens": _estimate_tokens(question_text),
+            "rendered_answer_tokens": _estimate_tokens(answer_text),
+            "method": "ceil(UTF-8 bytes / 4); local script does not call a model",
+        },
+        "conversation_token_usage": {
+            "input_tokens": None,
+            "output_tokens": None,
+            "total_tokens": None,
+            "status": "不可读取",
+            "note": "实际对话 Token 需由调用平台提供",
+        },
+    }
+
+
+def _index_token_report(papers: list[dict[str, str]]) -> dict[str, object]:
+    index_text = json.dumps(papers, ensure_ascii=False)
+    return {
+        "index_estimated_tokens": _estimate_tokens(index_text),
+        "conversation_token_usage": {
+            "input_tokens": None,
+            "output_tokens": None,
+            "total_tokens": None,
+            "status": "不可读取",
+            "note": "实际对话 Token 需由调用平台提供",
+        },
+        "method": "内容估算：ceil(UTF-8 bytes / 4); local script does not call a model",
+    }
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="采集并生成可追溯的公务员考试真题")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -48,7 +98,8 @@ def _parser() -> argparse.ArgumentParser:
     fetch_cmd.add_argument("--source", choices=["gkzhenti"], default="gkzhenti")
     fetch_cmd.add_argument("--paper", required=True, help="试卷页面 URL")
     fetch_cmd.add_argument("--province", default="", help="页面标题无法识别区域时补充")
-    fetch_cmd.add_argument("--subject", required=True, help="科目名称，例如 言语理解与表达")
+    fetch_cmd.add_argument("--subject", required=True, help="来源页面科目，例如 言语理解与表达")
+    fetch_cmd.add_argument("--question-type", default="", help="题型分类，例如 逻辑填空、图形推理")
     fetch_cmd.add_argument("--proxy", default="", help="可选 HTTP/HTTPS 代理")
     fetch_cmd.add_argument("--timeout", type=int, default=15)
     fetch_cmd.add_argument("--concurrency", type=int, default=2, help="图片下载并发数")
@@ -119,7 +170,13 @@ def _download_images(paper: gkzhenti.PaperRecord, cache: CacheStore, apply: bool
 def _paper_from_args(args: argparse.Namespace, cache: CacheStore) -> gkzhenti.PaperRecord:
     payload = cache.fetch(args.paper, "papers", ".html", refresh=args.refresh)
     province = args.province or "未识别区域"
-    paper = gkzhenti.parse_paper(payload, args.paper, province=province, subject=args.subject)
+    paper = gkzhenti.parse_paper(
+        payload,
+        args.paper,
+        province=province,
+        subject=args.subject,
+        question_type=args.question_type,
+    )
     if not paper.questions:
         raise ValueError(f"未解析到科目“{args.subject}”的题目，页面结构可能已变化: {args.paper}")
     for answer_url in gkzhenti.find_answer_links(payload, args.paper)[:2]:
@@ -143,9 +200,12 @@ def _paper_from_args(args: argparse.Namespace, cache: CacheStore) -> gkzhenti.Pa
 
 
 def _output_paths(paper: gkzhenti.PaperRecord) -> tuple[Path, Path]:
-    subject = paper.questions[0].subject if paper.questions else "未分科"
-    base = safe_name(f"{paper.year or '未知'}-{paper.province}-{paper.paper_type}-{subject}-真题")
-    return ROOT / "题库" / "题目" / "行测" / f"{base}.md", ROOT / "题库" / "答案" / "行测" / f"{base}-答案.md"
+    question_type = safe_name(paper.questions[0].subject if paper.questions else "未分类")
+    base = safe_name(f"{paper.year or '未知'}-{paper.province}-{paper.paper_type}-真题")
+    return (
+        ROOT / "题库" / "题目" / "行测" / question_type / f"{base}.md",
+        ROOT / "题库" / "答案" / "行测" / question_type / f"{base}-答案.md",
+    )
 
 
 def run_list(args: argparse.Namespace) -> int:
@@ -155,7 +215,7 @@ def run_list(args: argparse.Namespace) -> int:
         papers = [paper for paper in papers if f"{args.year}年" in paper["title"]]
     if args.limit > 0:
         papers = papers[: args.limit]
-    print(json.dumps(papers, ensure_ascii=False, indent=2))
+    print(json.dumps({"papers": papers, "token_usage": _index_token_report(papers)}, ensure_ascii=False, indent=2))
     return 0
 
 
@@ -169,7 +229,10 @@ def run_fetch(args: argparse.Namespace) -> int:
     question_text = render_question_file(paper, question_path, answer_path, RESOURCE_ROOT)
     answer_text = render_answer_file(paper, question_path, answer_path)
     run_name = safe_name(f"{paper.year or 'unknown'}-{paper.province}-{paper.paper_type}-{paper.questions[0].subject}")
-    cache.write_json("runs", f"{run_name}.json", paper.to_dict())
+    token_usage = _token_report(paper, question_text, answer_text)
+    run_record = paper.to_dict()
+    run_record["token_usage"] = token_usage
+    cache.write_json("runs", f"{run_name}.json", run_record)
     result = {
         "paper": paper.title,
         "source_url": paper.url,
@@ -182,6 +245,7 @@ def run_fetch(args: argparse.Namespace) -> int:
         "mode": "apply" if args.apply else "preview",
         "question_path": str(question_path),
         "answer_path": str(answer_path),
+        "token_usage": token_usage,
     }
     if args.apply:
         result["question_write"] = _safe_write(question_path, question_text, force=args.force)
