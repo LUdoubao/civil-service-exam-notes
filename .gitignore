@@ -24,3 +24,6 @@ build/
 out/
 target/
 
+/tmp/
+/.codex/
+/scripts/
